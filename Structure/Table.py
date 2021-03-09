@@ -1,6 +1,6 @@
-from Instructions import *
+from .Instructions import *
 
-INSTRUCTIONS = {
+Opcodes = {
     "STOP":(0x00,"STOP()","halts execution of the contract",STOP),
 	"ADD":(0x01,"a+b","(u)int256 addition modulo 2**256",ADD),
 	"MUL":(0x02,"a*b","(u)int256 multiplication modulo 2**256",MUL),
@@ -147,7 +147,7 @@ INSTRUCTIONS = {
 
 if __name__ == "__main__":
 	input_memory = [2,8]
-	print(INSTRUCTIONS['SHA3'][-1](
+	print(Opcodes['SHA3'][-1](
 		input_stack=[0x0,0x40],
 		input_memory=input_memory
 	))

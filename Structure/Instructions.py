@@ -6,21 +6,29 @@ import functools
 
 from typing import List,Dict
 
-from utils import keccak256
-from constant import *
+from .utils import keccak256
+from .constant import *
 
-def STOP():
-    logging.info("halts exectuion of the contract")
+class EVM:
+	def __init__(self,Stack,Memory,Storage):
+		self.Stack = Stack
+		self.Memory = Memory
+		self.Storage = Storage
 
-def ADD(input_stack:List[int]) -> List[int]:
-	assert len(input_stack) >= 2
+	@classmethod
+	def STOP():
+		logging.info("halts exectuion of the contract")
 
-	c = input_stack[0]+input_stack[1]
-	if c>UPPER:
-		logging.warning("Integer overflow")
-	c = c%UPPER
-	output_stack = [c] + input_stack[2:]
-	return output_stack
+	@classmethod
+	def ADD(input_stack:List[int]) -> List[int]:
+		assert len(input_stack) >= 2
+
+		c = input_stack[0]+input_stack[1]
+		if c>UPPER:
+			logging.warning("Integer overflow")
+		c = c%UPPER
+		output_stack = [c] + input_stack[2:]
+		return output_stack
 
 def MUL(input_stack:List[int]) -> List[int]:
 	assert len(input_stack) >= 2
