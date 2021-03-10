@@ -25,7 +25,7 @@ class EVM:
 			STOP() \\
 			halts execution of the contract
 		'''
-		raise ValueError('Not implement STOP error!')
+		logging.info("ignore STOP!")
 
 	def ADD(self):
 		'''
@@ -197,7 +197,8 @@ class EVM:
 			a==0 \\
 			(u)int256 is zero
 		'''
-		raise ValueError('Not implement ISZERO error!')
+		a = self.Stack._pop_bytes()
+		self.Stack._push_byte(int(a==0))
 
 	def AND(self):
 		'''
@@ -355,7 +356,8 @@ class EVM:
 			memory[destOffset:destOffset+length]=address(this).code[offset:offset+length] \\
 			copy executing contract's bytecode
 		'''
-		raise ValueError('Not implement CODECOPY error!')
+		destOffset, offset, length = self.Stack._pop_bytes(3)
+		logging.info("ignore CODECOPY!")
 
 	def GASPRICE(self):
 		'''
@@ -521,7 +523,9 @@ class EVM:
 			$pc=cond?destination:$pc+1 \\
 			conditional jump if condition is truthy
 		'''
-		raise ValueError('Not implement JUMPI error!')
+		dest,cond = self.Stack._pop_bytes(2)
+		if cond:
+			self.pc = dest
 
 	def PC(self):
 		'''
@@ -1194,7 +1198,10 @@ class EVM:
 			returnmemory[offset:offset+length] \\
 			returns from this contract call
 		'''
-		raise ValueError('Not implement RETURN error!')
+		offset,length = self.Stack._pop_bytes(2)
+		logging.info("ignore RETURN!")
+		# value = self.Memory.get(offset,length)
+		# return value
 
 	def DELEGATECALL(self):
 		'''
@@ -1226,7 +1233,10 @@ class EVM:
 			revert(memory[offset:offset+length]) \\
 			reverts with return data
 		'''
-		raise ValueError('Not implement REVERT error!')
+		offset,length = self.Stack._pop_bytes(2)
+		value = self.Memory.get(offset,length)
+		logging.error("revert!")
+		# return value
 
 	def SELFDESTRUCT(self):
 		'''

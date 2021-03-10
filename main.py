@@ -12,7 +12,7 @@ def load_opcodes(file_path):
                 args = int(line[-1],16)
             else:
                 args = None
-            opcodes.append((hex(int(line[0],16)),opcode,args))
+            opcodes.append((line[0],opcode,args))
     return opcodes
 
 def load_init():
@@ -50,6 +50,8 @@ def before_init():
 if __name__ == "__main__":
     f = open("runing_log.py","w",encoding="utf-8")
     opcodes = load_opcodes("./data/init.disassemble")
+
+    DEBUG_Point = 0x0c
     stack,memory,storage = before_init()
     evm = EVM(
         Stack=EVM_stack(stack),
@@ -60,9 +62,9 @@ if __name__ == "__main__":
         opcode = opcodes[i]
         if int(opcode[0],16) != evm.pc:
             continue
-        if i == len(opcode) - 1:
+        if i == len(opcodes) - 1:
             break
-        evm.pc = opcodes[i+1][0]
+        evm.pc = int(opcodes[i+1][0],16)
 
         f.write("stack:[%s]\nmemory:%s\nstorage:%s\n%s\n\n"%(str(evm.Stack),str(evm.Memory),str(evm.Storage),"="*10+str(opcode)+"="*10))
         f.flush()
