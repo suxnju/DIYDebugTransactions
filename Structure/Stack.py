@@ -1,3 +1,6 @@
+from typing import List
+
+import json
 class EVM_stack:
 	def __init__(self,stack:List[int]):
 		self.stack = stack
@@ -7,15 +10,21 @@ class EVM_stack:
 
 	# def __str__(self) -> str:
 	# 	return "\n".join([
-	# 			hex(v).strip("0x").rjust(64,"0")
+	# 			hex(v).lstrip("0x").rjust(64,"0")
 	# 			for v in self.stack
 	# 		]
 	# 	)
 
 	def __str__(self) -> str:
-		return ",".join([
-			hex(v) for v in self.stack
-		])
+		# return ",".join([
+		# 	hex(v) for v in self.stack
+		# ])
+		return json.dumps(
+			{
+				i:hex(v) for i,v in enumerate(self.stack) 
+			},
+			indent='\t'
+		)
 
 	def _top_bytes(self,read_cnt:int=1) -> List[int]:
 		assert len(self.stack) >= read_cnt
@@ -41,5 +50,5 @@ class EVM_stack:
 		assert len(self.stack) > e_index
 
 		tmp = self.stack[s_index]
-		self.stack[e_index] = self.stack[s_index]
-		self.stack[s_index] = tmp
+		self.stack[s_index] = self.stack[e_index]
+		self.stack[e_index] = tmp

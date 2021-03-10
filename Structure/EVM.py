@@ -1,10 +1,14 @@
 from typing import List,Dict
 from .utils import keccak256
 
-from Constant import Constant
-from Stack import EVM_stack
-from Memory import EVM_memory
-from Storage import EVM_storage
+from .Constant import Constant
+from .Stack import EVM_stack
+from .Memory import EVM_memory
+from .Storage import EVM_storage
+
+import logging
+
+logging.basicConfig(filename="./LOG.log",level=logging.INFO,filemode='a')
 
 class EVM:
 	def __init__(self,Stack:EVM_stack,Memory:EVM_memory,Storage:EVM_storage):
@@ -269,7 +273,7 @@ class EVM:
 			keccak256
 		'''
 		offset,length = self.Stack._pop_bytes(2)
-		to_hash = self.Memory.getConcat(offset,length)
+		to_hash = self.Memory.get(offset,length//32)
 		value = int(keccak256(to_hash,is_hex=True),16)
 		self.Stack._push_byte(value)
 
@@ -464,7 +468,7 @@ class EVM:
 			reads a (u)int256 from memory
 		'''
 		offset = self.Stack._pop_bytes()
-		value = self.Memory.get(offset)
+		value = int(self.Memory.get(offset),16)
 		self.Stack._push_byte(value)
 
 	def MSTORE(self):
@@ -509,7 +513,7 @@ class EVM:
 			$pc=destination \\
 			unconditional jump
 		'''
-		raise ValueError('Not implement JUMP error!')
+		self.pc = self.Stack._pop_bytes()
 
 	def JUMPI(self):
 		'''
@@ -1085,7 +1089,10 @@ class EVM:
 			LOG0(memory[offset:offset+length]) \\
 			fires an event
 		'''
-		raise ValueError('Not implement LOG0 error!')
+		offset,length = self.Stack._pop_bytes(2)
+		value = self.Memory.get(offset,length=length)
+
+		logging.info(value)
 
 	def LOG1(self):
 		'''
@@ -1093,7 +1100,10 @@ class EVM:
 			LOG1(memory[offset:offset+length],topic0) \\
 			fires an event
 		'''
-		raise ValueError('Not implement LOG1 error!')
+		offset,length,topic0 = self.Stack._pop_bytes(3)
+		value = self.Memory.get(offset,length=length//32)
+
+		logging.info(value+hex(topic0).lstrip("0x").rjust(64,"0"))
 
 	def LOG2(self):
 		'''
@@ -1101,7 +1111,11 @@ class EVM:
 			LOG2(memory[offset:offset+length],topic0,topic1) \\
 			fires an event
 		'''
-		raise ValueError('Not implement LOG2 error!')
+		offset,length,topic0,topic1 = self.Stack._pop_bytes(4)
+		value = self.Memory.get(offset,length=length//32)
+
+		logging.info(value+hex(topic0).lstrip("0x").rjust(64,"0")+hex(topic1).lstrip("0x").rjust(64,"0"))
+
 
 	def LOG3(self):
 		'''
@@ -1109,7 +1123,11 @@ class EVM:
 			LOG3(memory[offset:offset+length],topic0,topic1,topic2) \\
 			fires an event
 		'''
-		raise ValueError('Not implement LOG3 error!')
+		offset,length,topic0,topic1,topic2 = self.Stack._pop_bytes(5)
+		value = self.Memory.get(offset,length=length//32)
+
+		logging.info(value+hex(topic0).lstrip("0x").rjust(64,"0")+hex(topic1).lstrip("0x").rjust(64,"0")+hex(topic2).lstrip("0x").rjust(64,"0"))
+
 
 	def LOG4(self):
 		'''
@@ -1117,7 +1135,10 @@ class EVM:
 			LOG4(memory[offset:offset+length],topic0,topic1,topic2,topic3) \\
 			fires an event
 		'''
-		raise ValueError('Not implement LOG4 error!')
+		offset,length,topic0,topic1,topic2,topic3 = self.Stack._pop_bytes(6)
+		value = self.Memory.get(offset,length=length//32)
+
+		logging.info(value+hex(topic0).lstrip("0x").rjust(64,"0")+hex(topic1).lstrip("0x").rjust(64,"0")+hex(topic2).lstrip("0x").rjust(64,"0")+hex(topic3).lstrip("0x").rjust(64,"0"))
 
 	def PUSH(self):
 		'''
@@ -1214,8 +1235,6 @@ class EVM:
 			destroys the contract and sends all funds to addr.
 		'''
 		raise ValueError('Not implement SELFDESTRUCT error!')
-
-
 
 
 if __name__ == "__main__":

@@ -2,9 +2,9 @@ from web3 import Web3
 
 def keccak256(plain:str,is_hex:bool=False) -> str:
     if is_hex:
-        return Web3.toHex(Web3.keccak(hexstr=plain)).strip("0x")
+        return Web3.toHex(Web3.keccak(hexstr=plain)).lstrip("0x").ljust(64,"0")
     else:
-        return Web3.toHex(Web3.keccak(text=plain)).strip("0x")
+        return Web3.toHex(Web3.keccak(text=plain)).lstrip("0x").ljust(64,"0")
 
 
 if __name__ == "__main__":
