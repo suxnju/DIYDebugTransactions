@@ -2,9 +2,9 @@ from Structure.EVM import EVM,EVM_stack,EVM_memory,EVM_storage
 
 import logging
 
-def load_opcodes():
+def load_opcodes(file_path):
     opcodes = []
-    with open("./data.txt","r",encoding="utf-8") as f:
+    with open(file_path,"r",encoding="utf-8") as f:
         for line in f.readlines():
             line = line.strip().split(" ")
             opcode = line[1]
@@ -40,18 +40,29 @@ def load_init():
 
     return stack,memory,storage
 
+def before_init():
+    stack = []
+    memory = {}
+    storage = {}
+
+    return stack,memory,storage
+
 if __name__ == "__main__":
     f = open("runing_log.py","w",encoding="utf-8")
-    opcodes = load_opcodes()
-    stack,memory,storage = load_init()
+    opcodes = load_opcodes("./data/init.disassemble")
+    stack,memory,storage = before_init()
     evm = EVM(
         Stack=EVM_stack(stack),
         Memory=EVM_memory(memory),
         Storage=EVM_storage(storage)
     )
-    for opcode in opcodes:
+    for i in range(len(opcodes)):
+        opcode = opcodes[i]
         if int(opcode[0],16) != evm.pc:
             continue
+        if i == len(opcode) - 1:
+            break
+        evm.pc = opcodes[i+1][0]
 
         f.write("stack:[%s]\nmemory:%s\nstorage:%s\n%s\n\n"%(str(evm.Stack),str(evm.Memory),str(evm.Storage),"="*10+str(opcode)+"="*10))
         f.flush()
