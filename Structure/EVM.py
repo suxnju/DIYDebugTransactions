@@ -76,7 +76,7 @@ class EVM:
 		'''
 		assert len(self.Stack) >= 2
 		a,b = self.Stack._pop_bytes(2)
-		c = a / b
+		c = a // b
 		if c>Constant.MODULO:
 			logging.warning("Integer overflow")
 		c = c%Constant.MODULO
@@ -157,7 +157,8 @@ class EVM:
 			a<b \\
 			uint256 comparison
 		'''
-		raise ValueError('Not implement LT error!')
+		a,b = self.Stack._pop_bytes(2)
+		self.Stack._push_byte(int(a<b))
 
 	def GT(self):
 		'''
@@ -165,7 +166,8 @@ class EVM:
 			a>b \\
 			uint256 comparison
 		'''
-		raise ValueError('Not implement GT error!')
+		a,b = self.Stack._pop_bytes(2)
+		self.Stack._push_byte(int(a>b))
 
 	def SLT(self):
 		'''
@@ -189,7 +191,8 @@ class EVM:
 			a==b \\
 			(u)int256 equality
 		'''
-		raise ValueError('Not implement EQ error!')
+		a,b = self.Stack._pop_bytes(2)
+		self.Stack._push_byte(int(a==b))
 
 	def ISZERO(self):
 		'''
@@ -324,7 +327,10 @@ class EVM:
 			msg.data[i:i+32] \\
 			reads a (u)int256 from message data
 		'''
-		raise ValueError('Not implement CALLDATALOAD error!')
+		i = self.Stack._pop_bytes()
+		INPUT = hex(Constant.msg_input)
+		data = INPUT[i:i+64]
+		self.Stack._push_byte(int(data,16))
 
 	def CALLDATASIZE(self):
 		'''
@@ -332,7 +338,8 @@ class EVM:
 			msg.data.size \\
 			message data length in bytes
 		'''
-		raise ValueError('Not implement CALLDATASIZE error!')
+		INPUT = hex(Constant.msg_input).lstrip("0x")
+		self.Stack._push_byte(int(len(INPUT)/2))
 
 	def CALLDATACOPY(self):
 		'''
