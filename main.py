@@ -1,6 +1,7 @@
 from Structure.EVM import EVM,EVM_stack,EVM_memory,EVM_storage
 
 import logging
+logging.basicConfig(filename="./LOG.log",level=logging.INFO,filemode='a')
 
 def load_opcodes(file_path):
     opcodes = []
