@@ -340,7 +340,7 @@ class EVM:
 			msg.data[i:i+32] \\
 			reads a (u)int256 from message data
 		'''
-		i = self.Stack._pop_bytes()
+		i = self.Stack._pop_bytes() * 2 # Turn to hex
 		INPUT = hex(self.Transaction.get("msg_input")).lstrip("0x")
 		data = INPUT[i:i+64]
 		self.Stack._push_byte(int(data,16))

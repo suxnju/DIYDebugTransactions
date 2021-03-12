@@ -1,5 +1,6 @@
 from Structure.EVM import EVM,EVM_stack,EVM_memory,EVM_storage
 
+import os
 import json
 import logging
 from Structure.Constant import OPCODE_TO_INSTR
@@ -21,7 +22,7 @@ def load_opcodes(file_path):
     return opcodes
 
 def execute_init():
-    f = open("./log/init.log","w",encoding="utf-8")
+    f = open("./log/running/init.log","w",encoding="utf-8")
     opcodes = load_opcodes("./data/init.disassemble")
     
     tx_0 = Transaction(
@@ -55,7 +56,7 @@ def execute_init():
         eval(eval_function)
     f.close()
 
-    with open("./log/storage_init.json","w",encoding="utf-8") as f:
+    with open("./log/storage_readwrite/storage_init.json","w",encoding="utf-8") as f:
         json.dump({"read":evm.readStorage,"write":evm.writeStorage},f,indent='\t')
     
     return evm.Storage
@@ -76,10 +77,9 @@ def execute_tx(storage:'EVM_storage',transaction:'Transaction',opcodes:'list',DE
 
     logging.info("="*20+"Running Transaction %s"%tx_hash+"="*20)
 
-    f = open("./log/runing/%s.log"%tx_hash,"w",encoding="utf-8")
+    f = open("./log/running/%s.log"%tx_hash,"w",encoding="utf-8")
     for i in range(len(opcodes)):
         opcode = opcodes[i]
-        evm.pc = int(opcodes[i+1][0],16)
 
         if opcode[1] not in OPCODE_TO_INSTR.keys():
             continue
@@ -88,8 +88,9 @@ def execute_tx(storage:'EVM_storage',transaction:'Transaction',opcodes:'list',DE
         if i == len(opcodes) - 1:
             break
 
-        if int(opcode[0],16) == DEBUG_Point:
-            print()
+        evm.pc = int(opcodes[i+1][0],16)
+        # if int(opcode[0],16) == DEBUG_Point:
+        #     print()
 
         f.write("stack:[%s]\nmemory:%s\nstorage:%s\n%s\n\n"%(str(evm.Stack),str(evm.Memory),str(evm.Storage),"="*10+str(opcode)+"="*10))
         f.flush()
@@ -100,12 +101,26 @@ def execute_tx(storage:'EVM_storage',transaction:'Transaction',opcodes:'list',DE
 
     f.close()
 
-    with open("./log/storage/%s.json"%tx_hash,"w",encoding="utf-8") as f:
+    with open("./log/storage_readwrite/%s.json"%tx_hash,"w",encoding="utf-8") as f:
         json.dump({"read":evm.readStorage,"write":evm.writeStorage},f,indent='\t')
+
+    with open("./log/storage/%s.json"%tx_hash,"w",encoding="utf-8") as f:
+        f.write(str(evm.Storage))
 
     return evm.Storage
 
+def mk_dirs():
+    if not os.path.exists("./log/storage"):
+        os.makedirs("./log/storage")
+    
+    if not os.path.exists("./log/storage_readwrite"):
+        os.makedirs("./log/storage_readwrite")
+    
+    if not os.path.exists("./log/running"):
+        os.makedirs("./log/running")
+
 if __name__ == "__main__":
+    mk_dirs()
     logging.basicConfig(
         filename="./log/init.log",
         filemode="a",

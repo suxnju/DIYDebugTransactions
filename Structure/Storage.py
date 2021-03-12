@@ -13,7 +13,8 @@ class EVM_storage:
 		# )
 		return json.dumps(
 			{
-				hex(key):hex(self.storage[key]) for key in self.storage.keys()},
+				hex(key):hex(self.storage[key]) for key in self.storage.keys()
+				},
 			indent='\t'
 		)
 
