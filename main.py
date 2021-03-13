@@ -6,10 +6,8 @@ import logging
 from Structure.Constant import OPCODE_TO_INSTR
 from Structure.Transaction import Transaction
 
-# logging.basicConfig(filename="./LOG.log",level=logging.INFO,filemode='w')
-
-def load_opcodes(file_path):
-    opcodes = []
+def load_opcodes(file_path:str) -> 'Dict':
+    opcodes = {}
     with open(file_path,"r",encoding="utf-8") as f:
         for line in f.readlines():
             line = line.strip().split(" ")
@@ -18,7 +16,7 @@ def load_opcodes(file_path):
                 args = int(line[-1],16)
             else:
                 args = None
-            opcodes.append((line[0],opcode,args))
+            opcodes[int(line[0],16)] = (opcode,args)
     return opcodes
 
 def execute_init():
@@ -39,21 +37,24 @@ def execute_init():
         Storage=EVM_storage({}),
         Transaction=tx_0
     )
-    for i in range(len(opcodes)):
-        opcode = opcodes[i]
-        if int(opcode[0],16) != evm.pc:
-            continue
-        if i == len(opcodes) - 1:
-            break
-        evm.pc = int(opcodes[i+1][0],16)
+    while True:
+        opcode = opcodes[evm.pc][0]
+        args = opcodes[evm.pc][1]
         
-        f.write("stack:[%s]\nmemory:%s\nstorage:%s\n%s\n\n"%(str(evm.Stack),str(evm.Memory),str(evm.Storage),"="*10+str(opcode)+"="*10))
+        f.write("stack:[%s]\nmemory:%s\nstorage:%s\n%s\n\n"%(str(evm.Stack),str(evm.Memory),str(evm.Storage),"="*10+str(evm.pc)+":"+str(opcodes[evm.pc])+"="*10))
         f.flush()
 
-        evm.args = opcode[2]
-        eval_function = "evm.%s()"%opcode[1]
-        
+        if opcode in ["RETURN","STOP","REVERT"]:
+            break
+        evm.pc += 1
+        if args is not None:
+            args_bytes = int(opcode.lstrip("PUSH"))
+            evm.pc += args_bytes
+
+        evm.args = args
+        eval_function = "evm.%s()"%opcode        
         eval(eval_function)
+
     f.close()
 
     with open("./log/storage_readwrite/storage_init.json","w",encoding="utf-8") as f:
@@ -61,7 +62,7 @@ def execute_init():
     
     return evm.Storage
 
-def execute_tx(storage:'EVM_storage',transaction:'Transaction',opcodes:'list',DEBUG_Point:int=0x0):
+def execute_tx(storage:'EVM_storage',transaction:'Transaction',opcodes:'Dict',DEBUG_Point:int=0x0):
     logging.basicConfig(
         filename="./log/%s.log"%transaction.get("tx_hash"),
         filemode="a",
@@ -78,25 +79,23 @@ def execute_tx(storage:'EVM_storage',transaction:'Transaction',opcodes:'list',DE
     logging.info("="*20+"Running Transaction %s"%tx_hash+"="*20)
 
     f = open("./log/running/%s.log"%tx_hash,"w",encoding="utf-8")
-    for i in range(len(opcodes)):
-        opcode = opcodes[i]
-
-        if opcode[1] not in OPCODE_TO_INSTR.keys():
-            continue
-        if int(opcode[0],16) != evm.pc:
-            continue
-        if i == len(opcodes) - 1:
-            break
-
-        evm.pc = int(opcodes[i+1][0],16)
-        # if int(opcode[0],16) == DEBUG_Point:
-        #     print()
-
-        f.write("stack:[%s]\nmemory:%s\nstorage:%s\n%s\n\n"%(str(evm.Stack),str(evm.Memory),str(evm.Storage),"="*10+str(opcode)+"="*10))
+    
+    while True:
+        opcode = opcodes[evm.pc][0]
+        args = opcodes[evm.pc][1]
+        
+        f.write("stack:[%s]\nmemory:%s\nstorage:%s\n%s\n\n"%(str(evm.Stack),str(evm.Memory),str(evm.Storage),"="*10+hex(evm.pc)+"_"+str(evm.pc)+":"+str(opcodes[evm.pc])+"="*10))
         f.flush()
 
-        evm.args = opcode[2]
-        eval_function = "evm.%s()"%opcode[1]
+        if opcode in ["RETURN","STOP","REVERT"]:
+            break
+        evm.pc += 1
+        if args is not None:
+            args_bytes = int(opcode.lstrip("PUSH"))
+            evm.pc += args_bytes
+
+        evm.args = args
+        eval_function = "evm.%s()"%opcode        
         eval(eval_function)
 
     f.close()
@@ -174,3 +173,6 @@ if __name__ == "__main__":
         transaction=tx_3,
         opcodes=opcodes
     )
+
+
+    print()
