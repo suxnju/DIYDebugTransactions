@@ -19,7 +19,7 @@ class Transaction:
 		self.tx_hash = tx_hash
 		self.msg_caller = int(msg_caller,16)
 		self.msg_value = msg_value
-		self.msg_input = int(msg_input,16)
+		self.msg_input = msg_input
 		self.timestamp = get_timestamp(timestamp)
 
 	def get(self,key):

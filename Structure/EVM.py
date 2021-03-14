@@ -341,7 +341,7 @@ class EVM:
 			reads a (u)int256 from message data
 		'''
 		i = self.Stack._pop_bytes() * 2 # Turn to hex
-		INPUT = hex(self.Transaction.get("msg_input")).lstrip("0x")
+		INPUT = self.Transaction.get("msg_input")[2:]
 		data = INPUT[i:i+64]
 		self.Stack._push_byte(int(data,16))
 
@@ -351,7 +351,7 @@ class EVM:
 			msg.data.size \\
 			message data length in bytes
 		'''
-		INPUT = hex(self.Transaction.get("msg_input")).lstrip("0x")
+		INPUT = self.Transaction.get("msg_input")[2:]
 		self.Stack._push_byte(int(len(INPUT)/2))
 
 	def CALLDATACOPY(self):

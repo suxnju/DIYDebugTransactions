@@ -27,7 +27,7 @@ def execute_init():
         tx_hash="0x79a09f9843b1248b192ea05f36b60686d3ca5bbee7020f7431aed669131516c7",
         msg_caller="0x5dc12131e65b8f395ab11a2c4e6af717e1b179ba",
         msg_value=0,
-        msg_input="0", # shield input
+        msg_input="0", # mask input
         timestamp="2018-08-19 14:50:21 UTC"
     )
 
@@ -84,6 +84,9 @@ def execute_tx(storage:'EVM_storage',transaction:'Transaction',opcodes:'Dict',DE
         opcode = opcodes[evm.pc][0]
         args = opcodes[evm.pc][1]
         
+        if evm.pc == DEBUG_Point and DEBUG_Point is not 0x0:
+            print(end='')
+
         f.write("stack:[%s]\nmemory:%s\nstorage:%s\n%s\n\n"%(str(evm.Stack),str(evm.Memory),str(evm.Storage),"="*10+hex(evm.pc)+"_"+str(evm.pc)+":"+str(opcodes[evm.pc])+"="*10))
         f.flush()
 
@@ -174,5 +177,30 @@ if __name__ == "__main__":
         opcodes=opcodes
     )
 
-
+    tx_4 = Transaction(
+        tx_hash="0x6694d7e86778e0e92e57d463009d8ba184b83cbf249df18c9ce606e0f04a6671",
+        msg_caller="0xa70e846b87366ac57cf78fb2222e1ca404ba5406",
+        msg_value=50000000000000000,
+        msg_input="0xfe1f6a0b0a756ddfd731b3648078c31009bb4c752a2547fbdf70f16f7ec7e0112671f9020000000000000000000000000000000000000000000000000000000000000000",
+        timestamp="2018-08-20 03:02:49 UTC"
+    )
+    storage_after_4 = execute_tx(
+        storage=storage_after_3,
+        transaction=tx_4,
+        opcodes=opcodes
+    )
+    
+    tx_5 = Transaction(
+        tx_hash="0x2c14559b934f471b83cab660b1227b69422b9a2c57a2ec6f229399240aa3f924",
+        msg_caller="0xa70e846b87366ac57cf78fb2222e1ca404ba5406",
+        msg_value=0,
+        msg_input="0x0aebeb4e0000000000000000000000000000000000000000000000000000000000000002",
+        timestamp="2018-08-20 03:36:14 UTC"
+    )
+    storage_after_5 = execute_tx(
+        storage=storage_after_4,
+        transaction=tx_5,
+        opcodes=opcodes,
+        DEBUG_Point=0x32
+    )
     print()
