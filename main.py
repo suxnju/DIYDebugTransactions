@@ -24,7 +24,7 @@ def load_opcodes(file_path:str) -> 'Dict':
     return opcodes
 
 def execute_init():
-    opcodes = load_opcodes("./data/init.disassemble")
+    opcodes = load_opcodes("./data/game.init")
     
     tx_0 = Transaction(
         tx_hash="0x79a09f9843b1248b192ea05f36b60686d3ca5bbee7020f7431aed669131516c7",
@@ -194,4 +194,5 @@ def verfied_group():
 
 if __name__ == "__main__":
     mk_dirs()
+    replay_transactions()
     verfied_group()
