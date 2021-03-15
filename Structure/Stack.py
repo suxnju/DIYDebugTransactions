@@ -1,6 +1,7 @@
 from typing import List
 
 import json
+from .utils import hex_fill
 class EVM_stack:
 	def __init__(self,stack:List[int]=[]):
 		self.stack = stack
@@ -8,20 +9,10 @@ class EVM_stack:
 	def __len__(self) -> int:
 		return len(self.stack)
 
-	# def __str__(self) -> str:
-	# 	return "\n".join([
-	# 			hex(v).lstrip("0x").rjust(64,"0")
-	# 			for v in self.stack
-	# 		]
-	# 	)
-
 	def __str__(self) -> str:
-		# return ",".join([
-		# 	hex(v) for v in self.stack
-		# ])
 		return json.dumps(
 			{
-				i:hex(v) for i,v in enumerate(self.stack) 
+				i:hex_fill(v) for i,v in enumerate(self.stack) 
 			},
 			indent='\t'
 		)

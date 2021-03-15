@@ -1,5 +1,5 @@
 from typing import List,Dict
-from .utils import keccak256
+from .utils import keccak256,hex_fill
 
 from .Constant import Constant
 from .Stack import EVM_stack
@@ -249,7 +249,7 @@ class EVM:
 			256-bit bitwise not
 		'''
 		a = self.Stack._pop_bytes()
-		self.Stack._push_byte(~a)
+		self.Stack._push_byte(Constant.UPPER_UINT256-a)
 
 	def BYTE(self):
 		'''
@@ -519,7 +519,7 @@ class EVM:
 		key = self.Stack._pop_bytes()
 		value = self.Storage.get(key)
 
-		self.readStorage.append("0x"+hex(key).lstrip("0x").rjust(64,"0"))
+		self.readStorage.append(hex_fill(key))
 
 		self.Stack._push_byte(value)
 
@@ -531,7 +531,7 @@ class EVM:
 		'''
 		key,value = self.Stack._pop_bytes(2)
 
-		self.writeStorage.append("0x"+hex(key).lstrip("0x").rjust(64,"0"))
+		self.writeStorage.append(hex_fill(key))
 
 		self.Storage.set_key(key,value)
 
@@ -1133,7 +1133,7 @@ class EVM:
 		offset,length,topic0 = self.Stack._pop_bytes(3)
 		value = self.Memory.get(offset,length=length)
 
-		logging.info(value+hex(topic0).lstrip("0x").rjust(64,"0"))
+		logging.info(value+hex(topic0)[2:].rjust(64,"0"))
 
 	def LOG2(self):
 		'''
@@ -1144,7 +1144,7 @@ class EVM:
 		offset,length,topic0,topic1 = self.Stack._pop_bytes(4)
 		value = self.Memory.get(offset,length=length)
 
-		logging.info(value+hex(topic0).lstrip("0x").rjust(64,"0")+hex(topic1).lstrip("0x").rjust(64,"0"))
+		logging.info(value+hex(topic0)[2:].rjust(64,"0")+hex(topic1)[2:].rjust(64,"0"))
 
 
 	def LOG3(self):
@@ -1156,7 +1156,7 @@ class EVM:
 		offset,length,topic0,topic1,topic2 = self.Stack._pop_bytes(5)
 		value = self.Memory.get(offset,length=length)
 
-		logging.info(value+hex(topic0).lstrip("0x").rjust(64,"0")+hex(topic1).lstrip("0x").rjust(64,"0")+hex(topic2).lstrip("0x").rjust(64,"0"))
+		logging.info(value+hex(topic0)[2:].rjust(64,"0")+hex(topic1)[2:].rjust(64,"0")+hex(topic2)[2:].rjust(64,"0"))
 
 
 	def LOG4(self):
@@ -1168,7 +1168,7 @@ class EVM:
 		offset,length,topic0,topic1,topic2,topic3 = self.Stack._pop_bytes(6)
 		value = self.Memory.get(offset,length=length)
 
-		logging.info(value+hex(topic0).lstrip("0x").rjust(64,"0")+hex(topic1).lstrip("0x").rjust(64,"0")+hex(topic2).lstrip("0x").rjust(64,"0")+hex(topic3).lstrip("0x").rjust(64,"0"))
+		logging.info(value+hex(topic0)[2:].rjust(64,"0")+hex(topic1)[2:].rjust(64,"0")+hex(topic2)[2:].rjust(64,"0")+hex(topic3)[2:].rjust(64,"0"))
 
 	def PUSH(self):
 		'''

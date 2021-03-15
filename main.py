@@ -41,10 +41,12 @@ def execute_init():
         opcode = opcodes[evm.pc][0]
         args = opcodes[evm.pc][1]
         
-        f.write("stack:[%s]\nmemory:%s\nstorage:%s\n%s\n\n"%(str(evm.Stack),str(evm.Memory),str(evm.Storage),"="*10+str(evm.pc)+":"+str(opcodes[evm.pc])+"="*10))
+        f.write("stack:[%s]\nmemory:%s\nstorage:%s\n%s\n\n"%(str(evm.Stack),str(evm.Memory),str(evm.Storage),"="*10+hex(evm.pc)+"_"+str(evm.pc)+":"+str(opcodes[evm.pc])+"="*10))
         f.flush()
 
         if opcode in ["RETURN","STOP","REVERT"]:
+            if opcode == "REVERT":
+                print()
             break
         evm.pc += 1
         if args is not None:
@@ -63,11 +65,6 @@ def execute_init():
     return evm.Storage
 
 def execute_tx(storage:'EVM_storage',transaction:'Transaction',opcodes:'Dict',DEBUG_Point:int=0x0):
-    logging.basicConfig(
-        filename="./log/%s.log"%transaction.get("tx_hash"),
-        filemode="a",
-        level=logging.INFO
-    )
     evm = EVM(
         Stack=EVM_stack(),
         Memory=EVM_memory(),
@@ -177,6 +174,7 @@ if __name__ == "__main__":
         opcodes=opcodes
     )
 
+    # Create Gameid 02
     tx_4 = Transaction(
         tx_hash="0x6694d7e86778e0e92e57d463009d8ba184b83cbf249df18c9ce606e0f04a6671",
         msg_caller="0xa70e846b87366ac57cf78fb2222e1ca404ba5406",
@@ -190,6 +188,7 @@ if __name__ == "__main__":
         opcodes=opcodes
     )
     
+    # Close Gameid 02
     tx_5 = Transaction(
         tx_hash="0x2c14559b934f471b83cab660b1227b69422b9a2c57a2ec6f229399240aa3f924",
         msg_caller="0xa70e846b87366ac57cf78fb2222e1ca404ba5406",

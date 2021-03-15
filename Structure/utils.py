@@ -2,9 +2,9 @@ from web3 import Web3
 
 def keccak256(plain:str,is_hex:bool=False) -> str:
     if is_hex:
-        return Web3.toHex(Web3.keccak(hexstr=plain)).lstrip("0x").ljust(64,"0")
+        return Web3.toHex(Web3.keccak(hexstr=plain)).lstrip("0x").rjust(64,"0")
     else:
-        return Web3.toHex(Web3.keccak(text=plain)).lstrip("0x").ljust(64,"0")
+        return Web3.toHex(Web3.keccak(text=plain)).lstrip("0x").rjust(64,"0")
 
 def storage_diff(groundtruth_storage,generate_storage):
     re_storage = {}
@@ -23,6 +23,10 @@ def storage_diff(groundtruth_storage,generate_storage):
                 print("%s:\n\tgenerate:%s\n\tgroundth:%s\n"%(hex(key),hex(re_generage[key]),hex(re_storage[key])))
         else:
             print("Lack key:%s"%hex(key))
+
+def hex_fill(value:int,fill_up:int=64,fill_value:str="0") -> str:
+    value = hex(value)[2:]
+    return "0x" + value.rjust(fill_up,fill_value)
 
 if __name__ == "__main__":
     to_hash = "00000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000008"

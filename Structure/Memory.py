@@ -1,6 +1,8 @@
 from typing import Dict
 
 import json
+from .utils import hex_fill
+
 class EVM_memory:
 	def __init__(self,memory:str="0"*int("0x60",16)):
 		self.memory = memory
@@ -16,9 +18,11 @@ class EVM_memory:
 	def set_value(self,offset:int,value:int):
 		offset = offset * 2
 		tmp = self.memory
+		# fill up zero (right padding)
 		if len(tmp) < offset + 64:
 			tmp = tmp.ljust(offset+64,"0")
-		tmp = tmp[:offset] + hex(value).lstrip("0x").rjust(64,"0") + tmp[offset+64:]
+		
+		tmp = tmp[:offset] + hex(value)[2:].rjust(64,"0") + tmp[offset+64:]
 		self.memory = tmp
 
 	def get(self,offset:int,length:int=1) -> str:

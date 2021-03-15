@@ -4,10 +4,12 @@ import os
 import json
 import logging
 import pandas as pd
+import math
 
 from Structure.Constant import OPCODE_TO_INSTR
 from Structure.Transaction import Transaction
 
+from collections import Counter
 def load_opcodes(file_path:str) -> 'Dict':
     opcodes = {}
     with open(file_path,"r",encoding="utf-8") as f:
@@ -55,7 +57,7 @@ def execute_init():
 
     return evm.Storage, {"read":evm.readStorage,"write":evm.writeStorage}
 
-def execute_tx(storage:'EVM_storage',transaction:'Transaction',opcodes:'Dict',DEBUG_Point:int=0x0):
+def execute_tx(storage:'EVM_storage',transaction:'Transaction',opcodes:'Dict',DEBUG_Point:int=0x0,verbose:bool=False):
     evm = EVM(
         Stack=EVM_stack(),
         Memory=EVM_memory(),
@@ -64,11 +66,19 @@ def execute_tx(storage:'EVM_storage',transaction:'Transaction',opcodes:'Dict',DE
     )
     tx_hash = transaction.get("tx_hash")
     
+    if verbose:
+        f = open("./log/running/%s.log"%tx_hash,"w",encoding="utf-8")
+
     while True:
         opcode = opcodes[evm.pc][0]
         args = opcodes[evm.pc][1]
-        
+
+        if verbose:
+            f.write("stack:[%s]\nmemory:%s\nstorage:%s\n%s\n\n"%(str(evm.Stack),str(evm.Memory),str(evm.Storage),"="*10+hex(evm.pc)+"_"+str(evm.pc)+":"+str(opcodes[evm.pc])+"="*10))
+
         if opcode in ["RETURN","STOP","REVERT"]:
+            if opcode == "REVERT":
+                print()
             break
         evm.pc += 1
         if args is not None:
@@ -79,14 +89,33 @@ def execute_tx(storage:'EVM_storage',transaction:'Transaction',opcodes:'Dict',DE
         eval_function = "evm.%s()"%opcode        
         eval(eval_function)
 
+    if verbose:
+        f.close()
+        with open("./log/storage_readwrite/%s.json"%tx_hash,"w",encoding="utf-8") as f:
+            json.dump({"read":[v.rjust(64,"0") for v in evm.readStorage],"write":[v.rjust(64,"0") for v in evm.writeStorage]},f,indent='\t')
+
+        with open("./log/storage/%s.json"%tx_hash,"w",encoding="utf-8") as f:
+            f.write(str(evm.Storage))
+
     return evm.Storage, {"read":evm.readStorage,"write":evm.writeStorage}
 
-def load_data(data_file="./data/0xa8f9c7ff9f605f401bde6659fd18d9a0d0a802c5.csv") -> 'Transaction':
-    exec_txs = pd.read_csv(data_file,sep=',').sort_values(by=['block_timestamp','nonce','transaction_index'],ascending=(True,True,True))
+def load_group(data_file="./data/game_group.csv") -> 'Dict':
+    exec_txs = pd.read_csv(data_file,sep=',')
+    group = {}
+    for row, exec_tx in exec_txs.iterrows():
+        if exec_tx['data'] not in group:
+            group[exec_tx['data']] = [exec_tx['transaction_hash']]
+        else:
+            group[exec_tx['data']].append(exec_tx['transaction_hash'])
+    
+    return group
+
+def load_data(data_file="./data/game_txs.csv") -> 'Transaction':
+    exec_txs = pd.read_csv(data_file,sep=',').sort_values(by=['block_timestamp','transaction_index'],ascending=(True,True,True))
     for row, exec_tx in exec_txs.iterrows():
         if exec_tx['hash'] == "0x79a09f9843b1248b192ea05f36b60686d3ca5bbee7020f7431aed669131516c7": # init has executed
             continue
-        if exec_tx['receipt_status'] == '0': # ignore failed transactions
+        if exec_tx['receipt_status'] == 0: # ignore failed transactions
             continue
         print("\r%d"%row,end='')
         yield Transaction(
@@ -97,7 +126,28 @@ def load_data(data_file="./data/0xa8f9c7ff9f605f401bde6659fd18d9a0d0a802c5.csv")
             timestamp=exec_tx['block_timestamp']
         )
 
+def check_common_slot(groupid:int,txs:'list',storage_modified:'Dict') -> 'bool':
+    commons = set()
+    for i, tx_hash in enumerate(txs):
+        if i == 0:
+            commons = commons | set(storage_modified[tx_hash]['read'] + storage_modified[tx_hash]['write'])
+        else:
+            commons = commons & set(storage_modified[tx_hash]['read'] + storage_modified[tx_hash]['write'])
+
+    return commons
+
+def mk_dirs():
+    if not os.path.exists("./log/storage"):
+        os.makedirs("./log/storage")
+    
+    if not os.path.exists("./log/storage_readwrite"):
+        os.makedirs("./log/storage_readwrite")
+    
+    if not os.path.exists("./log/running"):
+        os.makedirs("./log/running")
+
 if __name__ == "__main__":
+    mk_dirs()
     storage, storage_init = execute_init()
     
     storage_modified = {
@@ -106,13 +156,30 @@ if __name__ == "__main__":
     opcodes = load_opcodes("./data/game.disassemble")
 
     for tx in load_data():
+        if tx.get("tx_hash") == "0x8b20e7edcdb9a58a9d7b5fe08795ba0ff11bb8b4e0e1ebffeba03e2e50075681":
+            verbose = True
+        else:
+            verbose = False
         storage, storage_read_write = execute_tx(
             storage=storage,
             transaction=tx,
-            opcodes=opcodes
+            opcodes=opcodes,
+            verbose=verbose
         )
         storage_modified[tx.get("tx_hash")] = storage_read_write
+
+        if verbose:            
+            with open("result.json","w",encoding="utf-8") as f:
+                json.dump(storage_modified,f,indent='\t')
+            break
     
-    with open("result.json","w",encoding="utf-8") as f:
-        json.dump(storage_modified,f,indent='\t')
+    # with open("result.json","r",encoding="utf-8") as f:
+    #     storage_modified = json.load(f)
+    
+    # group = load_group()
+    # commons = {}
+    # for groupid in group.keys():
+    #     common_slots = check_common_slot(groupid,group[groupid],storage_modified)
+    #     commons[groupid] = common_slots
+
     print()
