@@ -15,19 +15,26 @@ class EVM_memory:
 			indent='\t'
 		)
 
-	def set_value(self,offset:int,value:int):
+	def set_value(self,offset:int,value:int,length:int=32):
 		offset = offset * 2
+		length = length * 2
 		tmp = self.memory
 		# fill up zero (right padding)
-		if len(tmp) < offset + 64:
-			tmp = tmp.ljust(offset+64,"0")
+		if len(tmp) < offset + length:
+			tmp = tmp.ljust(offset+length,"0")
 		
-		tmp = tmp[:offset] + hex(value)[2:].rjust(64,"0") + tmp[offset+64:]
+		tmp = tmp[:offset] + hex(value)[2:].rjust(length,"0") + tmp[offset+length:]
 		self.memory = tmp
 
 	def get(self,offset:int,length:int=1) -> str:
 		offset = offset *2
-		return self.memory[offset:offset+length*2]
+		length = length *2
+		tmp = self.memory
+		# fill up zero (right padding)
+		if len(tmp) < offset+length:
+			tmp = tmp.ljust(offset+length,"0")
+		self.memory = tmp
+		return self.memory[offset:offset+length]
 
 if __name__ == "__main__":
 	memory_ = EVM_memory()

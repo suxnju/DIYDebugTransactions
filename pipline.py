@@ -8,25 +8,22 @@ import math
 
 from Structure.Constant import OPCODE_TO_INSTR
 from Structure.Transaction import Transaction
+from Structure.utils import disassemble
 
-from collections import Counter
+def execute_init(transaction:'Transaction'):
+    contract_hex = transaction.get("msg_input")
+    if contract_hex.startswith("0x"):
+        contract_hex = contract_hex[2:]
+    hex_split = contract_hex.index(contract_hex[:8],2)
 
-def execute_init():
-    opcodes = load_opcodes("./data/game.init")
-    
-    tx_0 = Transaction(
-        tx_hash="0x79a09f9843b1248b192ea05f36b60686d3ca5bbee7020f7431aed669131516c7",
-        msg_caller="0x5dc12131e65b8f395ab11a2c4e6af717e1b179ba",
-        msg_value=0,
-        msg_input="0", # mask input
-        timestamp="2018-08-19 14:50:21 UTC"
-    )
+    init_hex = contract_hex[:hex_split]
+    opcodes = disassemble(init_hex)
 
     evm = EVM(
         Stack=EVM_stack(),
         Memory=EVM_memory(),
         Storage=EVM_storage({}),
-        Transaction=tx_0
+        Transaction=transaction
     )
     while True:
         opcode = opcodes[evm.pc][0]
@@ -42,8 +39,11 @@ def execute_init():
         evm.args = args
         eval_function = "evm.%s()"%opcode        
         eval(eval_function)
+    
+    run_hex = contract_hex[hex_split:]
+    run_opcodes = disassemble(run_hex)
 
-    return evm.Storage, {"read":evm.readStorage,"write":evm.writeStorage}
+    return run_opcodes, evm.Storage
 
 def execute_tx(storage:'EVM_storage',transaction:'Transaction',opcodes:'Dict',DEBUG_Point:int=0x0,verbose:bool=False):
     evm = EVM(
@@ -66,7 +66,7 @@ def execute_tx(storage:'EVM_storage',transaction:'Transaction',opcodes:'Dict',DE
 
         if opcode in ["RETURN","STOP","REVERT"]:
             if opcode == "REVERT":
-                print()
+                raise ValueError("REVERT Happened...")
             break
         evm.pc += 1
         if args is not None:
@@ -101,29 +101,17 @@ def load_group(data_file="./data/game_group.csv") -> 'Dict':
 def load_data(data_file="./data/game_txs.csv") -> 'Transaction':
     exec_txs = pd.read_csv(data_file,sep=',').sort_values(by=['block_timestamp','transaction_index'],ascending=(True,True))
     for row, exec_tx in exec_txs.iterrows():
-        if exec_tx['hash'] == "0x79a09f9843b1248b192ea05f36b60686d3ca5bbee7020f7431aed669131516c7": # init has executed
-            continue
         if exec_tx['receipt_status'] == 0: # ignore failed transactions
             continue
         print("\r%d"%row,end='')
         yield Transaction(
             tx_hash=exec_tx['hash'],
             msg_caller=exec_tx['from_address'],
-            msg_to=exec_tx['to_address'],
+            msg_to=exec_tx['to_address'] if type(exec_tx['to_address']) != type(1.0) else '0', # create tx has no to_address
             msg_value=int(exec_tx['value']),
             msg_input=exec_tx['input'],
             timestamp=exec_tx['block_timestamp']
         )
-
-def check_common_slot(groupid:int,txs:'list',storage_modified:'Dict') -> 'bool':
-    commons = set()
-    for i, tx_hash in enumerate(txs):
-        if i == 0:
-            commons = commons | set(storage_modified[tx_hash]['read'] + storage_modified[tx_hash]['write'])
-        else:
-            commons = commons & set(storage_modified[tx_hash]['read'] + storage_modified[tx_hash]['write'])
-
-    return commons
 
 def mk_dirs():
     if not os.path.exists("./log/storage"):
@@ -135,15 +123,12 @@ def mk_dirs():
     if not os.path.exists("./log/running"):
         os.makedirs("./log/running")
 
-def replay_transactions():
-    storage, storage_init = execute_init()
-    
-    storage_modified = {
-        "init":storage_init
-    }
-    opcodes = load_opcodes("./data/game.disassemble")
-
-    for tx in load_data():
+def replay_transactions(tx_file:str="./data/game_txs.csv"):
+    storage_modified = {}
+    for tx_idx, tx in enumerate(load_data(tx_file)):
+        if tx_idx == 0:
+            opcodes,storage = execute_init(tx)
+            continue
         if tx.get("tx_hash") == "0x8b20e7edcdb9a58a9d7b5fe08795ba0ff11bb8b4e0e1ebffeba03e2e50075681":
             verbose = True
         else:
@@ -159,67 +144,8 @@ def replay_transactions():
     with open("result.json","w",encoding="utf-8") as f:
         json.dump(storage_modified,f,indent='\t')
 
-def verfied_group():
-    with open("result.json","r",encoding="utf-8") as f:
-        storage_modified = json.load(f)
-    
-    group = load_group()
-    commons = {}
-    id_list = list(group.keys())
-    for groupid in id_list:
-        common_slots = check_common_slot(groupid,group[groupid],storage_modified)
-        commons[groupid] = common_slots
-
-    for i in range(0,len(id_list)):
-        gameid = id_list[i]
-        for j in range(i+1,len(id_list)):
-            o_gameid = id_list[j]
-
-            commons[gameid] = commons[gameid] - commons[o_gameid]
-        commons[gameid] = list(commons[gameid])
-
-    with open("commons.json","w",encoding="utf-8") as f:
-        json.dump(commons,f,indent='\t')
-
-def mining_group():
-    pass
-
-def slot_map():
-    with open("result.json","r",encoding="utf-8") as f:
-        storage_modified = json.load(f)
-    
-    res = {}
-    for tx in storage_modified:
-        for slot in set(storage_modified[tx]['read'] + storage_modified[tx]['write']):
-            if slot in res:
-                res[slot].append(tx)
-            else:
-                res[slot] = [tx]
-
-    with open("res.json","w",encoding="utf-8") as f:
-        # json.dump(res,f,indent='\t')
-        json.dump(
-            {k:v for k,v in res.items()},f,
-            indent='\t'
-        )
-
-def freq():
-    with open("res.json","r",encoding="utf-8") as f:
-        freq = json.load(f)
-
-    res = {}
-    for f in freq:
-        if len(freq[f]) in res:
-            res[len(freq[f])] += 1
-        else:
-            res[len(freq[f])] = 1
-    
-    with open("freq.json","w",encoding="utf-8") as f:
-        json.dump(res,f,indent='\t')
-
 if __name__ == "__main__":
     mk_dirs()
-    # replay_transactions()
-    # verfied_group()
-    slot_map()
-    freq()
+    replay_transactions(tx_file="./data/bounty_txs.csv")
+
+    print()

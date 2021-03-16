@@ -300,7 +300,7 @@ class EVM:
 			address(this) \\
 			address of the executing contract
 		'''
-		raise ValueError('Not implement ADDRESS error!')
+		self.Stack._push_byte(self.Transaction.get("msg_to"))
 
 	def BALANCE(self):
 		'''
@@ -360,7 +360,9 @@ class EVM:
 			memory[destOffset:destOffset+length]=msg.data[offset:offset+length] \\
 			copy message data
 		'''
-		raise ValueError('Not implement CALLDATACOPY error!')
+		destOffset, offset, length = self.Stack._pop_bytes(3)
+		value = int(self.Transaction.get("msg_input")[offset*2:offset*2+length*2],16)
+		self.Memory.set_value(destOffset,value,length)
 
 	def CODESIZE(self):
 		'''
@@ -387,7 +389,7 @@ class EVM:
 		'''
 		raise ValueError('Not implement GASPRICE error!')
 
-	def EXTCODESIZE(self):
+	def EXTCODESIZE(self):#check whether the address is a contract
 		'''
 			3B \\
 			address(addr).code.size \\

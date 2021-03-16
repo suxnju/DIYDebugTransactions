@@ -15,9 +15,10 @@ def get_time(timestamp):
 	return block_time
 
 class Transaction:
-	def __init__(self,tx_hash:str,msg_caller:str,msg_value:int,msg_input:str,timestamp:str):
+	def __init__(self,tx_hash:str,msg_caller:str,msg_to:str,msg_value:int,msg_input:str,timestamp:str):
 		self.tx_hash = tx_hash
 		self.msg_caller = int(msg_caller,16)
+		self.msg_to = int(msg_to,16)
 		self.msg_value = msg_value
 		self.msg_input = msg_input
 		self.timestamp = get_timestamp(timestamp)
