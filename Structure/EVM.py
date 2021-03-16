@@ -1,5 +1,5 @@
 from typing import List,Dict
-from .utils import keccak256,hex_fill
+from .utils import keccak256,hex_fill,online_query_address_hex
 
 from .Constant import Constant
 from .Stack import EVM_stack
@@ -395,7 +395,10 @@ class EVM:
 			address(addr).code.size \\
 			length of the contract bytecode at addr, in bytes
 		'''
-		raise ValueError('Not implement EXTCODESIZE error!')
+		addr = self.Stack._pop_bytes()
+		hex_len = online_query_address_hex(hex(addr))
+		self.Stack._push_byte(hex_len//2)
+		# print()
 
 	def EXTCODECOPY(self):
 		'''
@@ -577,7 +580,7 @@ class EVM:
 			gasRemaining=GAS() \\
 			remaining gas
 		'''
-		raise ValueError('Not implement GAS error!')
+		self.Stack._push_byte(500000) #We ignore Out of gas
 
 	def JUMPDEST(self):
 		'''
@@ -1204,6 +1207,7 @@ class EVM:
 		'''
 		raise ValueError('Not implement CREATE error!')
 
+	# We cannot call other contract, we set the returned value is 1
 	def CALL(self):
 		'''
 			F1 \\
@@ -1211,8 +1215,12 @@ class EVM:
 			calls a method in another contract
 		'''
 		gas,address,value,argsOffset,argsLength,retOffset,retLength = self.Stack._pop_bytes(7)
-		self.Stack._push_byte(1)
-		logging.info("Ignore CALL")
+		success = 1
+		self.Stack._push_byte(success)
+		if retLength > 0:
+			value = int("f"*(retLength//2),16)
+			self.Memory.set_value(retOffset,value,retLength)
+		logging.warning("Ignore CALL")
 
 	def CALLCODE(self):
 		'''

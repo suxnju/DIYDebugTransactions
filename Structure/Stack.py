@@ -12,7 +12,7 @@ class EVM_stack:
 	def __str__(self) -> str:
 		return json.dumps(
 			{
-				i:hex_fill(v) for i,v in enumerate(self.stack) 
+				i:hex(v) for i,v in enumerate(self.stack) 
 			},
 			indent='\t'
 		)
