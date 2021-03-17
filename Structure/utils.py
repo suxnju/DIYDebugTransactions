@@ -83,9 +83,27 @@ def online_query_address_hex(address:str) -> int:
 
     return len(response['bytecode'])
 
+def online_query_address(address:str) -> 'Dict':
+    from etherscan.contracts import Contract as api
+    KEY = "YUZUJHDUH4DQHZJZUHINK1RVXYQ6AMED1R"
+    left_times = 4
+    while left_times:
+        left_times -= 1
+        try:
+            contract_info = api(address=address,api_key=KEY).get_sourcecode()
+            return contract_info
+        except Exception as e:
+            time.sleep(0.4)
+    logging.error("error in address %s"%address)
+    return None
+
 if __name__ == "__main__":
     # to_hash = "00000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000008"
     # print(keccak256(to_hash,is_hex=True))
 
-    hex_len = online_query_address_hex("0x89d24a6b4ccb1b6faa2625fe562bdd9a23260359")
-    print(hex_len)
+    # hex_len = online_query_address_hex("0x89d24a6b4ccb1b6faa2625fe562bdd9a23260359")
+    # print(hex_len)
+
+    address_info = online_query_address("0x8631316985dcbd442db6136fd0fa0e21d9767f8d")
+
+    print()

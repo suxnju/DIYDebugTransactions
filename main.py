@@ -137,41 +137,6 @@ def load_data(mode,data_file="./data/game_txs.csv",address="0x096be08d7d1caeea65
                 msg_input=exec_tx['input'],
                 timestamp=exec_tx['block_timestamp']
             )
-    elif mode == "database":
-        from pymongo import MongoClient
-        tx_db = MongoClient(host="210.28.134.71",port=27017)["EthereumBigquery"]['transactions']
-
-        filter={
-            '$or': [
-                {
-                    'to_address': address
-                }, {
-                    'receipt_contract_address': address
-                }
-            ]
-        }
-        sort=list({
-            'block_timestamp': 1, 
-            'transaction_index': 1
-        }.items())
-
-        txs = tx_db.find(
-            filter = filter,
-            sort = sort
-        )
-        for row, exec_tx in enumerate(txs):
-            if exec_tx['receipt_status'] == 0: # ignore failed transactions
-                continue
-            print("\r%d"%row,end='')
-            yield Transaction(
-                tx_hash=exec_tx['hash'],
-                msg_caller=exec_tx['from_address'],
-                msg_to=exec_tx['to_address'] if exec_tx['to_address'] != '' else '0', # create tx has no to_address
-                msg_value=int(exec_tx['value']),
-                msg_input=exec_tx['input'],
-                timestamp=exec_tx['block_timestamp']
-            )
-
     else:
         raise ValueError("Not implement error!")
 
@@ -191,11 +156,6 @@ def replay_transactions(mode="file",tx_file:str="./data/game_txs.csv",address="0
         tx_data_iter = load_data(
             mode="file",
             data_file=tx_file
-        )
-    else:
-        tx_data_iter = load_data(
-            mode="database",
-            address=address
         )
 
     for tx_idx, tx in tqdm(enumerate(tx_data_iter)):
@@ -218,9 +178,10 @@ def replay_transactions(mode="file",tx_file:str="./data/game_txs.csv",address="0
         json.dump(storage_modified,f,indent='\t')
 
 if __name__ == "__main__":
-    # mk_dirs()
-    # replay_transactions(mode="database",address="0x096be08d7d1caeea6583eab6b75a0f5eaab012a5")
-    # replay_transactions(mode="file",tx_file="./data/game_txs.csv")
-    with open("./result.json","r") as f:
-        slot2txs(json.load(f))
-    freq()
+    mk_dirs()
+    # replay_transactions(mode="database",address="0x57964e649EA3735757D6898Ca56f135F4437E554")
+    replay_transactions(mode="file",tx_file="./data/game_txs.csv")
+
+    # with open("./result.json","r") as f:
+    #     slot2txs(json.load(f))
+    # freq()
