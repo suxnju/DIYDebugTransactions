@@ -265,7 +265,8 @@ class EVM:
 			value<<shift \\
 			256-bit shift left
 		'''
-		raise ValueError('Not implement SHL error!')
+		shift,value = self.Stack._pop_bytes(2)
+		self.Stack._push_byte(value<<shift)
 
 	def SHR(self):
 		'''
@@ -273,7 +274,8 @@ class EVM:
 			value>>shift \\
 			256-bit shift right
 		'''
-		raise ValueError('Not implement SHR error!')
+		shift,value = self.Stack._pop_bytes(2)
+		self.Stack._push_byte(value>>shift)
 
 	def SAR(self):
 		'''
@@ -370,7 +372,8 @@ class EVM:
 			address(this).code.size \\
 			length of the executing contract's code in bytes
 		'''
-		raise ValueError('Not implement CODESIZE error!')
+		hex_len = len(self.Transaction.get("msg_input").lstrip("0x"))
+		self.Stack._push_byte(hex_len//2)
 
 	def CODECOPY(self):
 		'''
@@ -1214,6 +1217,7 @@ class EVM:
 			success,memory[retOffset:retOffset+retLength]=address(addr).call.gas(gas).value(value)(memory[argsOffset:argsOffset+argsLength]) \\
 			calls a method in another contract
 		'''
+		# raise ValueError("CALL not implement")
 		gas,address,value,argsOffset,argsLength,retOffset,retLength = self.Stack._pop_bytes(7)
 		success = 1
 		self.Stack._push_byte(success)

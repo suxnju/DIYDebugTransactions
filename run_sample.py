@@ -21,11 +21,12 @@ def load_opcodes(file_path:str) -> 'Dict':
 
 def execute_init():
     f = open("./log/running/init.log","w",encoding="utf-8")
-    opcodes = load_opcodes("./data/init.disassemble")
+    opcodes = load_opcodes("./data/game.init")
     
     tx_0 = Transaction(
         tx_hash="0x79a09f9843b1248b192ea05f36b60686d3ca5bbee7020f7431aed669131516c7",
         msg_caller="0x5dc12131e65b8f395ab11a2c4e6af717e1b179ba",
+        msg_to="0",
         msg_value=0,
         msg_input="0", # mask input
         timestamp="2018-08-19 14:50:21 UTC"
