@@ -11,6 +11,8 @@ from Structure.Constant import OPCODE_TO_INSTR
 from Structure.Transaction import Transaction
 from Structure.utils import disassemble
 
+from Algorithm.algorithm import slot2txs,freq
+
 logging.basicConfig(
     filemode="a",
     filename="./log/running.log",
@@ -200,7 +202,7 @@ def replay_transactions(mode="file",tx_file:str="./data/game_txs.csv",address="0
         if tx_idx == 0:
             opcodes,storage = execute_init(tx)
             continue
-        if tx.get("tx_hash") == "0x64f7f84d09a07d2283efb705819261de4875676ce902564d2b18f337c4a2351b":
+        if tx.get("tx_hash") == "0xc6b56067b3c3eb0b5e11deb0a9913822d2bcc6252665ef0ca91a51c2b0874565":
             verbose = True
         else:
             verbose = False
@@ -216,7 +218,9 @@ def replay_transactions(mode="file",tx_file:str="./data/game_txs.csv",address="0
         json.dump(storage_modified,f,indent='\t')
 
 if __name__ == "__main__":
-    mk_dirs()
-    replay_transactions(mode="database",address="0x096be08d7d1caeea6583eab6b75a0f5eaab012a5")
+    # mk_dirs()
+    # replay_transactions(mode="database",address="0x096be08d7d1caeea6583eab6b75a0f5eaab012a5")
     # replay_transactions(mode="file",tx_file="./data/game_txs.csv")
-    print()
+    with open("./result.json","r") as f:
+        slot2txs(json.load(f))
+    freq()

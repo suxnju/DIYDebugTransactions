@@ -28,7 +28,7 @@ class Transaction:
 		self.msg_caller = int(msg_caller,16)
 		self.msg_to = int(msg_to,16)
 		self.msg_value = msg_value
-		self.msg_input = msg_input
+		self.msg_input = msg_input[2:] if msg_input.startswith("0x") else msg_input
 		self.timestamp = get_timestamp(timestamp)
 
 	def get(self,key):

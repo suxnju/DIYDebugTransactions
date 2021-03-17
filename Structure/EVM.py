@@ -310,7 +310,9 @@ class EVM:
 			address(addr).balance \\
 			address balance in wei
 		'''
-		raise ValueError('Not implement BALANCE error!')
+		addr = self.Stack._pop_bytes()
+		value = int("0"*(64//2)+"f"*(64//2),16)
+		self.Stack._push_byte(value)
 
 	def ORIGIN(self):
 		'''
@@ -343,7 +345,7 @@ class EVM:
 			reads a (u)int256 from message data
 		'''
 		i = self.Stack._pop_bytes() * 2 # Turn to hex
-		INPUT = self.Transaction.get("msg_input")[2:]
+		INPUT = self.Transaction.get("msg_input").ljust(i+64,"0") # Mark here
 		data = INPUT[i:i+64]
 		self.Stack._push_byte(int(data,16))
 
@@ -353,8 +355,8 @@ class EVM:
 			msg.data.size \\
 			message data length in bytes
 		'''
-		INPUT = self.Transaction.get("msg_input")[2:]
-		self.Stack._push_byte(int(len(INPUT)/2))
+		INPUT = self.Transaction.get("msg_input")
+		self.Stack._push_byte(len(INPUT)//2)
 
 	def CALLDATACOPY(self):
 		'''
@@ -363,8 +365,8 @@ class EVM:
 			copy message data
 		'''
 		destOffset, offset, length = self.Stack._pop_bytes(3)
-		value = int(self.Transaction.get("msg_input")[offset*2:offset*2+length*2],16)
-		self.Memory.set_value(destOffset,value,length)
+		value = self.Transaction.get("msg_input")[offset*2:offset*2+length*2]
+		self.Memory.set_str(destOffset,value,length) # bytes
 
 	def CODESIZE(self):
 		'''
@@ -382,7 +384,8 @@ class EVM:
 			copy executing contract's bytecode
 		'''
 		destOffset, offset, length = self.Stack._pop_bytes(3)
-		logging.info("ignore CODECOPY!")
+		value = self.Transaction.get("msg_input")[offset*2:offset*2+length*2]
+		self.Memory.set_str(destOffset,value,length)
 
 	def GASPRICE(self):
 		'''
@@ -508,7 +511,9 @@ class EVM:
 			writes a (u)int256 to memory
 		'''
 		offset,value = self.Stack._pop_bytes(2)
-		self.Memory.set_value(offset,value)
+		value = hex(value)[2:].rjust(32*2,"0")
+		# self.Memory.set_value(offset,value)
+		self.Memory.set_str(offset,value)
 
 	def MSTORE8(self):
 		'''
@@ -1222,8 +1227,8 @@ class EVM:
 		success = 1
 		self.Stack._push_byte(success)
 		if retLength > 0:
-			value = int("f"*(retLength//2),16)
-			self.Memory.set_value(retOffset,value,retLength)
+			value = "0"*(retLength//2)+"f"*(retLength//2)
+			self.Memory.set_str(retOffset,value,retLength)
 		logging.warning("Ignore CALL")
 
 	def CALLCODE(self):

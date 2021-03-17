@@ -15,6 +15,16 @@ class EVM_memory:
 			indent='\t'
 		)
 
+	def set_str(self,offset:int,value:str,length:int=32):
+		offset = offset * 2
+		length = length * 2
+		tmp = self.memory
+		if len(tmp) < offset + length:
+			tmp = tmp.ljust(offset+length,"0")
+		
+		tmp = tmp[:offset] + value + tmp[offset+length:]
+		self.memory = tmp
+
 	def set_value(self,offset:int,value:int,length:int=32):
 		offset = offset * 2
 		length = length * 2

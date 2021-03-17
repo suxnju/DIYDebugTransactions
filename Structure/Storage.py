@@ -9,7 +9,7 @@ class EVM_storage:
 	def __str__(self):
 		return json.dumps(
 			{
-				hex_fill(key):hex_fill(self.storage[key]) for i,key in enumerate(self.storage.keys()) if i < 5
+				hex_fill(key):hex_fill(self.storage[key]) for i,key in enumerate(self.storage.keys()) if i < 10
 				},
 			indent='\t'
 		)
